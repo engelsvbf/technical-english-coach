@@ -6,21 +6,36 @@ import * as views from "./views.js";
 import * as authViews from "./authViews.js";
 import * as channelViews from "./channelViews.js";
 
-const NAV = [
-  { route: "home", label: "Inicio", icon: "🏠" },
-  { route: "lessons", label: "Aprender", icon: "📚" },
-  { route: "reading", label: "Lecturas", icon: "📖" },
-  { route: "stories", label: "Cuentos", icon: "📗" },
-  { route: "conversations", label: "Conversaciones", icon: "💬" },
-  { route: "channels", label: "Intercambio en vivo", icon: "🗣️" },
-  { route: "pronunciation", label: "Pronunciación", icon: "🎧" },
-  { route: "exercises", label: "Ejercicios", icon: "✏️" },
-  { route: "vocabulary", label: "Vocabulario", icon: "📕" },
-  { route: "verbs", label: "Verbos", icon: "🔤" },
-  { route: "grammar", label: "Gramática", icon: "🧩" },
-  { route: "tutor", label: "Tutor IA", icon: "🤖" },
-  { route: "progress", label: "Mi progreso", icon: "📊" }
+// Grouped into labeled clusters instead of one flat list -- 14 destinations in a
+// single unbroken list was hard to scan, especially on the phone-width layout
+// the app now also ships as (the Android package).
+const NAV_GROUPS = [
+  { label: null, items: [
+    { route: "home", label: "Inicio", icon: "🏠" }
+  ] },
+  { label: "Aprender", items: [
+    { route: "lessons", label: "Lecciones", icon: "📚" },
+    { route: "reading", label: "Lecturas", icon: "📖" },
+    { route: "stories", label: "Cuentos", icon: "📗" },
+    { route: "conversations", label: "Conversaciones", icon: "💬" },
+    { route: "pronunciation", label: "Pronunciación", icon: "🎧" },
+    { route: "exercises", label: "Ejercicios", icon: "✏️" }
+  ] },
+  { label: "Vocabulario", items: [
+    { route: "vocabulary", label: "Vocabulario", icon: "📕" },
+    { route: "verbs", label: "Verbos", icon: "🔤" },
+    { route: "grammar", label: "Gramática", icon: "🧩" }
+  ] },
+  { label: "Practicar", items: [
+    { route: "channels", label: "Intercambio en vivo", icon: "🗣️" },
+    { route: "tutor", label: "Tutor IA", icon: "🤖" }
+  ] },
+  { label: "Tú", items: [
+    { route: "progress", label: "Mi progreso", icon: "📊" },
+    { route: "profile", label: "Mi perfil", icon: "⚙️" }
+  ] }
 ];
+const NAV = NAV_GROUPS.flatMap(g => g.items);
 
 const AUTH_ROUTES = new Set(["login", "register", "forgot-password"]);
 
@@ -37,7 +52,14 @@ function parseHash() {
 
 function renderAppShell() {
   app.innerHTML = `
-    <aside class="sidebar">
+    <header class="topbar">
+      <button class="hamburger-btn" id="hamburger-btn" aria-label="Abrir menú">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="topbar-title" id="topbar-title">Technical English Coach</div>
+    </header>
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+    <aside class="sidebar" id="sidebar">
       <div class="brand"><span class="dot"></span> Technical English Coach</div>
       <nav id="nav"></nav>
       <div class="sidebar-footer" id="sidebar-footer"></div>
@@ -46,25 +68,39 @@ function renderAppShell() {
   `;
   renderNav();
   renderFooter();
+
+  const sidebar = document.getElementById("sidebar");
+  const backdrop = document.getElementById("sidebar-backdrop");
+  const closeDrawer = () => { sidebar.classList.remove("open"); backdrop.classList.remove("visible"); };
+  document.getElementById("hamburger-btn").addEventListener("click", () => {
+    sidebar.classList.toggle("open");
+    backdrop.classList.toggle("visible");
+  });
+  backdrop.addEventListener("click", closeDrawer);
 }
 
 function renderNav() {
   const { route } = parseHash();
   const nav = document.getElementById("nav");
-  nav.innerHTML = NAV.map(item => `
-    <button class="nav-item ${route === item.route ? "active" : ""} ${isSectionUnlocked(item.route) ? "" : "locked"}" data-route="${item.route}">
-      <span class="nav-icon">${isSectionUnlocked(item.route) ? item.icon : "🔒"}</span> ${item.label}
-    </button>
-  `).join("") + `
-    <button class="nav-item ${route === "profile" ? "active" : ""}" data-route="profile" style="margin-top:8px;">
-      <span class="nav-icon">⚙️</span> Mi perfil
-    </button>
-  `;
+  nav.innerHTML = NAV_GROUPS.map(group => `
+    ${group.label ? `<div class="nav-group-label">${group.label}</div>` : ""}
+    ${group.items.map(item => `
+      <button class="nav-item ${route === item.route ? "active" : ""} ${isSectionUnlocked(item.route) ? "" : "locked"}" data-route="${item.route}">
+        <span class="nav-icon">${isSectionUnlocked(item.route) ? item.icon : "🔒"}</span> ${item.label}
+      </button>
+    `).join("")}
+  `).join("");
   nav.querySelectorAll("[data-route]").forEach(btn => {
     btn.addEventListener("click", () => {
       location.hash = `#/${btn.dataset.route}`;
+      const sidebar = document.getElementById("sidebar");
+      const backdrop = document.getElementById("sidebar-backdrop");
+      sidebar?.classList.remove("open");
+      backdrop?.classList.remove("visible");
     });
   });
+  const title = document.getElementById("topbar-title");
+  if (title) title.textContent = NAV.find(i => i.route === route)?.label || (route === "profile" ? "Mi perfil" : "Technical English Coach");
 }
 
 function renderFooter() {
@@ -121,6 +157,13 @@ async function routeApp() {
     renderer(main, params);
   }
   window.scrollTo(0, 0);
+  replayPageEnter(main);
+}
+
+function replayPageEnter(main) {
+  main.classList.remove("page-enter");
+  void main.offsetWidth; // force reflow so the animation restarts on every route change
+  main.classList.add("page-enter");
 }
 
 // ------------------------------------------------------------- Auth shell --
@@ -138,6 +181,7 @@ async function routeAuth() {
   const renderer = authViews[toCamel(route)] || authViews.login;
   renderer(main, params, onAuthenticated);
   window.scrollTo(0, 0);
+  replayPageEnter(main);
 }
 
 function toCamel(route) {
