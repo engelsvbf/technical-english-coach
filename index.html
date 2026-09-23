@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Technical English Coach</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2454ff" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Eng Coach" />
+  <link rel="stylesheet" href="src/style.css" />
+</head>
+<body>
+  <div id="app"></div>
+  <script src="src/vendor/signalr/signalr.min.js"></script>
+  <script type="module" src="src/app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => { /* offline support just won't be available */ });
+      });
+    }
+  </script>
+</body>
+</html>
