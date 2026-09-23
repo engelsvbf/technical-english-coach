@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "io.github.engelsvbf.twa",
-        "sha256_cert_fingerprints": ["92:54:53:C3:45:BA:6A:90:6A:CC:A2:3B:FC:25:7E:D5:7F:10:FC:D0:11:42:F1:02:57:F0:B4:2E:55:5F:BE:5C"]
+        "sha256_cert_fingerprints": ["13:4D:DF:FF:79:A0:A4:BC:D3:F5:4C:F1:D1:73:E2:34:15:F5:3A:9C:EE:99:5E:8C:2B:DC:0C:75:44:A9:AF:C3"]
       }
     }]
